@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import html
 import io
 import math
@@ -7,6 +8,8 @@ import re
 import unicodedata
 from pathlib import Path
 from typing import Any
+
+import numpy as np
 
 import pandas as pd
 import plotly.express as px
@@ -187,6 +190,27 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "no_financial_columns": "No recognized financial columns were detected. Review the worksheet headers.",
         "validation_details": "Validation details",
         "load_first": "Load a worksheet to view its preview and validation results.",
+        "unsupported_format": "Unsupported file format ({ext}). Please upload an .xlsx or .xls workbook.",
+        "unreadable_file": "The file could not be opened as an Excel workbook. It may be corrupted, password-protected or not a real Excel file.",
+        "missing_engine": "The library required to read {ext} files is not installed ({engine}).",
+        "sheet_missing": "The worksheet \"{sheet}\" no longer exists in this workbook.",
+        "generated_headers": "{count} column(s) had no header and were given a generated name: {items}.",
+        "duplicate_headers_detail": "Duplicate column names: {items}. Repeated names were numbered to keep every column.",
+        "duplicate_rows": "{count} duplicate data row(s) were found. They were kept; review them before analysis.",
+        "missing_values_detail": "{count} missing cell(s) were found (empty cells or placeholders such as \"-\" or \"N/A\").",
+        "invalid_numeric_detail": "{count} value(s) in financial columns could not be interpreted as numbers.",
+        "ambiguous_numbers": "{count} value(s) use an ambiguous format such as \"1.234\" or \"1,234\". Rule applied: a single dot is a decimal point, a single comma followed by exactly three digits is a thousands separator.",
+        "text_financial_column": "Column \"{column}\" matches a financial name but contains no numbers; it was not counted as invalid.",
+        "loaded_from": "Loaded from {filename} — worksheet \"{sheet}\"",
+        "sheet_not_loaded": "The selected worksheet is not loaded yet. Click \"Load worksheet\" to replace the current data.",
+        "invalid_examples": "Invalid values",
+        "examples": "Examples",
+        "count": "Count",
+        "period": "Period",
+        "amount": "Amount",
+        "chart_missing_columns": "The revenue and net income chart cannot be shown: no {items} column was recognized in this worksheet.",
+        "chart_no_values": "The revenue and net income chart cannot be shown: the recognized columns contain no numeric values.",
+        "chart_partial": "Only part of the chart is available: no {items} column was recognized.",
     },
     "fr": {
         "language": "Langue",
@@ -350,6 +374,27 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "no_financial_columns": "Aucune colonne financière reconnue. Vérifiez les en-têtes de la feuille.",
         "validation_details": "Détails de validation",
         "load_first": "Chargez une feuille pour afficher son aperçu et les résultats de validation.",
+        "unsupported_format": "Format de fichier non pris en charge ({ext}). Importez un classeur .xlsx ou .xls.",
+        "unreadable_file": "Le fichier n'a pas pu être ouvert comme classeur Excel. Il est peut-être corrompu, protégé par mot de passe ou n'est pas un vrai fichier Excel.",
+        "missing_engine": "La bibliothèque nécessaire pour lire les fichiers {ext} n'est pas installée ({engine}).",
+        "sheet_missing": "La feuille « {sheet} » n'existe plus dans ce classeur.",
+        "generated_headers": "{count} colonne(s) sans en-tête ont reçu un nom généré : {items}.",
+        "duplicate_headers_detail": "Noms de colonnes en double : {items}. Les doublons ont été numérotés afin de conserver toutes les colonnes.",
+        "duplicate_rows": "{count} ligne(s) de données en double ont été trouvées. Elles ont été conservées ; vérifiez-les avant l'analyse.",
+        "missing_values_detail": "{count} cellule(s) manquante(s) trouvée(s) (cellules vides ou valeurs comme « - » ou « N/A »).",
+        "invalid_numeric_detail": "{count} valeur(s) des colonnes financières n'ont pas pu être interprétées comme des nombres.",
+        "ambiguous_numbers": "{count} valeur(s) utilisent un format ambigu comme « 1.234 » ou « 1,234 ». Règle appliquée : un point unique est un séparateur décimal, une virgule unique suivie d'exactement trois chiffres est un séparateur de milliers.",
+        "text_financial_column": "La colonne « {column} » porte un nom financier mais ne contient aucun nombre ; elle n'a pas été comptée comme invalide.",
+        "loaded_from": "Chargé depuis {filename} — feuille « {sheet} »",
+        "sheet_not_loaded": "La feuille sélectionnée n'est pas encore chargée. Cliquez sur « Charger la feuille » pour remplacer les données actuelles.",
+        "invalid_examples": "Valeurs invalides",
+        "examples": "Exemples",
+        "count": "Nombre",
+        "period": "Période",
+        "amount": "Montant",
+        "chart_missing_columns": "Le graphique du chiffre d'affaires et du résultat net ne peut pas être affiché : aucune colonne {items} n'a été reconnue dans cette feuille.",
+        "chart_no_values": "Le graphique du chiffre d'affaires et du résultat net ne peut pas être affiché : les colonnes reconnues ne contiennent aucune valeur numérique.",
+        "chart_partial": "Le graphique est incomplet : aucune colonne {items} n'a été reconnue.",
     },
     "ar": {
         "language": "اللغة",
@@ -508,6 +553,27 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "no_financial_columns": "لم يتم التعرف على أعمدة مالية. راجع عناوين ورقة العمل.",
         "validation_details": "تفاصيل التحقق",
         "load_first": "حمّل ورقة عمل لعرض المعاينة ونتائج التحقق.",
+        "unsupported_format": "صيغة الملف غير مدعومة ({ext}). يرجى رفع مصنف بصيغة ‎.xlsx أو ‎.xls.",
+        "unreadable_file": "تعذر فتح الملف كمصنف Excel. قد يكون تالفًا أو محميًا بكلمة مرور أو ليس ملف Excel حقيقيًا.",
+        "missing_engine": "المكتبة اللازمة لقراءة ملفات {ext} غير مثبتة ({engine}).",
+        "sheet_missing": "ورقة العمل \"{sheet}\" لم تعد موجودة في هذا المصنف.",
+        "generated_headers": "{count} عمود بدون عنوان وتم منحه اسمًا تلقائيًا: {items}.",
+        "duplicate_headers_detail": "أسماء أعمدة مكررة: {items}. تم ترقيم الأسماء المكررة للاحتفاظ بجميع الأعمدة.",
+        "duplicate_rows": "تم العثور على {count} صف بيانات مكرر. تم الاحتفاظ بها؛ راجعها قبل التحليل.",
+        "missing_values_detail": "تم العثور على {count} خلية مفقودة (خلايا فارغة أو قيم مثل \"-\" أو \"N/A\").",
+        "invalid_numeric_detail": "تعذر تفسير {count} قيمة في الأعمدة المالية كأرقام.",
+        "ambiguous_numbers": "{count} قيمة بصيغة غامضة مثل \"1.234\" أو \"1,234\". القاعدة المطبقة: النقطة المفردة فاصلة عشرية، والفاصلة المفردة المتبوعة بثلاثة أرقام بالضبط فاصل للآلاف.",
+        "text_financial_column": "العمود \"{column}\" يحمل اسمًا ماليًا لكنه لا يحتوي على أرقام؛ لم يُحتسب كقيم غير صالحة.",
+        "loaded_from": "تم التحميل من {filename} — ورقة العمل \"{sheet}\"",
+        "sheet_not_loaded": "ورقة العمل المحددة لم تُحمّل بعد. انقر على \"تحميل ورقة العمل\" لاستبدال البيانات الحالية.",
+        "invalid_examples": "القيم غير الصالحة",
+        "examples": "أمثلة",
+        "count": "العدد",
+        "period": "الفترة",
+        "amount": "المبلغ",
+        "chart_missing_columns": "لا يمكن عرض مخطط الإيرادات وصافي الدخل: لم يتم التعرف على عمود {items} في ورقة العمل هذه.",
+        "chart_no_values": "لا يمكن عرض مخطط الإيرادات وصافي الدخل: الأعمدة المعترف بها لا تحتوي على قيم رقمية.",
+        "chart_partial": "المخطط غير مكتمل: لم يتم التعرف على عمود {items}.",
     },
 }
 
@@ -549,6 +615,9 @@ def initialize_state() -> None:
         "data": None,
         "analysis_results": None,
         "diagnostic_results": None,
+        "header_info": None,
+        "loaded_filename": None,
+        "loaded_sheet": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -694,7 +763,6 @@ def render_header() -> None:
         with logo_col:
             st.image(logo_svg, width=190)
             st.caption(t("brand_tagline"))
-
         with language_col:
             selected = st.selectbox(
                 t("language"),
@@ -804,7 +872,9 @@ ALIASES: dict[str, list[str]] = {
 
 
 def normalize_text(value: Any) -> str:
-    text = str(value).strip().lower()
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return ""
+    text = str(value).replace("\u00a0", " ").strip().lower()
     text = unicodedata.normalize("NFKD", text)
     text = "".join(ch for ch in text if not unicodedata.combining(ch))
     text = text.replace("’", "'")
@@ -813,45 +883,145 @@ def normalize_text(value: Any) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def parse_number(value: Any) -> float:
-    """Parse common numeric strings, including decimal-comma formats."""
-    if pd.isna(value):
-        return float("nan")
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return float(value)
+# Text placeholders that mean "no value" (never converted to zero).
+MISSING_MARKERS = {
+    "", "-", "--", "—", "–", "n/a", "na", "n.a.", "nan", "null", "none",
+    "#n/a", "#na", "nd", "n.d.", "s.o.", "/",
+}
+# Currency symbols / codes accepted around a number.
+_CURRENCY_RE = re.compile(
+    r"(?i)(?:[€$£¥]|us\$|usd|eur|euros?|mad|dhs?|dirhams?|gbp|chf|cad|tnd|dzd|د\.?م\.?|درهم)"
+)
+_NUMBER_RE = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 
-    text = str(value).strip().replace("\u00a0", "").replace(" ", "")
-    if not text:
-        return float("nan")
 
-    # Keep digits, decimal marks, signs and scientific notation.
-    text = re.sub(r"[^0-9,.\-+eE]", "", text)
-    if not text:
-        return float("nan")
+def is_missing_value(value: Any) -> bool:
+    """True for genuinely missing cells: NaN/None or a blank / placeholder string."""
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return value.replace("\u00a0", " ").strip().lower() in MISSING_MARKERS
+    try:
+        return bool(pd.isna(value))
+    except (TypeError, ValueError):
+        return False
 
-    if "," in text and "." in text:
+
+def _normalize_number_text(text: str) -> tuple[str | None, bool]:
+    """Return (python-float text or None, ambiguous_flag).
+
+    Documented separator rules:
+    * both "," and "." present  -> the right-most one is the decimal mark;
+    * the same separator repeated ("1.234.567", "1,234,567") -> thousands;
+    * a single "," followed by exactly 3 digits ("1,234") -> thousands (ambiguous);
+    * a single "," otherwise ("1,5", "12,75") -> decimal comma;
+    * a single "." -> decimal point; "1.234" is flagged as ambiguous.
+    Spaces, non-breaking spaces and apostrophes are thousands separators.
+    """
+    ambiguous = False
+    text = re.sub(r"[\s\u00a0\u202f'’]", "", text)
+    commas, dots = text.count(","), text.count(".")
+    if commas and dots:
         if text.rfind(",") > text.rfind("."):
+            if commas > 1:
+                return None, False
             text = text.replace(".", "").replace(",", ".")
         else:
+            if dots > 1:
+                return None, False
             text = text.replace(",", "")
-    elif "," in text:
-        pieces = text.split(",")
-        if len(pieces) == 2 and len(pieces[-1]) in (1, 2):
-            text = text.replace(",", ".")
+    elif commas > 1:
+        if not re.fullmatch(r"[+-]?\d{1,3}(,\d{3})+", text):
+            return None, False
+        text = text.replace(",", "")
+    elif dots > 1:
+        if not re.fullmatch(r"[+-]?\d{1,3}(\.\d{3})+", text):
+            return None, False
+        text = text.replace(".", "")
+    elif commas == 1:
+        if re.fullmatch(r"[+-]?\d{1,3},\d{3}", text):
+            ambiguous = True
+            text = text.replace(",", "")
         else:
-            text = text.replace(",", "")
+            text = text.replace(",", ".")
+    elif dots == 1 and re.fullmatch(r"[+-]?\d{1,3}\.\d{3}", text):
+        ambiguous = True
+    return (text if _NUMBER_RE.match(text) else None), ambiguous
 
+
+def _parse_number_detail(value: Any) -> tuple[float, str]:
+    """Return (number, status) with status in {"ok", "missing", "invalid", "ambiguous"}."""
+    if is_missing_value(value):
+        return float("nan"), "missing"
+    if isinstance(value, bool) or isinstance(value, (pd.Timestamp, np.datetime64)):
+        return float("nan"), "invalid"
+    if hasattr(value, "isoformat") and not isinstance(value, str):  # date / datetime / time
+        return float("nan"), "invalid"
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        number = float(value)
+        return (number, "ok") if math.isfinite(number) else (float("nan"), "invalid")
+
+    text = str(value).replace("\u00a0", " ").strip()
+    negative = False
+    # Accounting negatives keep their sign: "(1 234)" and "1 234-" mean -1234.
+    if text.startswith("(") and text.endswith(")"):
+        negative, text = True, text[1:-1].strip()
+    elif text.endswith("-") and not text.startswith(("-", "+")):
+        negative, text = True, text[:-1].strip()
+    text = _CURRENCY_RE.sub("", text).strip()
+    # A percentage sign is removed; the number is kept as written (15% -> 15).
+    if text.endswith("%"):
+        text = text[:-1].strip()
+    if text.startswith("(") and text.endswith(")"):
+        negative, text = True, text[1:-1].strip()
+    if not text:
+        return float("nan"), "invalid"
+    if re.search(r"[^0-9,.\s\u00a0\u202f'’+\-eE]", text):
+        return float("nan"), "invalid"
+    normalized, ambiguous = _normalize_number_text(text)
+    if normalized is None:
+        return float("nan"), "invalid"
     try:
-        return float(text)
+        number = float(normalized)
     except ValueError:
-        return float("nan")
+        return float("nan"), "invalid"
+    if not math.isfinite(number):
+        return float("nan"), "invalid"
+    if negative:
+        number = -abs(number)
+    return number, ("ambiguous" if ambiguous else "ok")
+
+
+def parse_number(value: Any) -> float:
+    """Parse a cell into a float. Missing or unparseable values return NaN (never 0)."""
+    return _parse_number_detail(value)[0]
 
 
 def numeric_series(series: pd.Series) -> pd.Series:
-    direct = pd.to_numeric(series, errors="coerce")
-    if direct.notna().sum() >= series.notna().sum() * 0.8:
-        return direct.astype(float)
+    """Convert a column to floats without modifying the original data."""
+    if pd.api.types.is_bool_dtype(series) or pd.api.types.is_datetime64_any_dtype(series):
+        return pd.Series(np.nan, index=series.index, dtype=float)
+    if pd.api.types.is_numeric_dtype(series):
+        return pd.to_numeric(series, errors="coerce").astype(float)
     return series.map(parse_number).astype(float)
+
+
+def numeric_status(series: pd.Series) -> pd.Series:
+    """Per-cell parsing status: "ok", "missing", "invalid" or "ambiguous"."""
+    return series.map(lambda value: _parse_number_detail(value)[1])
+
+
+def is_mostly_numeric(series: pd.Series, threshold: float = 0.5) -> bool:
+    status = numeric_status(series)
+    present = status != "missing"
+    if not present.any():
+        return False
+    return (status[present].isin(["ok", "ambiguous"])).mean() >= threshold
+
+
+def missing_mask(df: pd.DataFrame) -> pd.DataFrame:
+    """Missing cells, including blank strings and placeholders like "-" or "N/A"."""
+    return df.apply(lambda column: column.map(is_missing_value))
 
 
 def detect_financial_columns(df: pd.DataFrame) -> dict[str, int]:
@@ -889,56 +1059,101 @@ def detect_financial_columns(df: pd.DataFrame) -> dict[str, int]:
     return detected
 
 
-def validate_data(df: pd.DataFrame) -> tuple[list[tuple[str, dict[str, Any]]], dict[str, int]]:
-    """Return translated-message keys and summary counts for a worksheet."""
+def validate_data(
+    df: pd.DataFrame,
+    header_info: dict[str, Any] | None = None,
+) -> tuple[list[tuple[str, dict[str, Any]]], dict[str, int]]:
+    """Return translated-message keys and summary counts for a worksheet.
+
+    Nothing is modified or removed: duplicates, missing and invalid values are only reported.
+    """
     messages: list[tuple[str, dict[str, Any]]] = []
     counts = {
         "rows": 0 if df is None else len(df),
         "columns": 0 if df is None else len(df.columns),
         "numeric_columns": 0,
         "missing_values": 0,
+        "duplicate_rows": 0,
+        "invalid_numeric": 0,
+        "ambiguous_numbers": 0,
     }
+    details: dict[str, Any] = {"invalid": []}
+    counts_details = details  # exposed via st.session_state for the details panel
 
-    if df is None or df.empty:
+    if df is None or len(df.columns) == 0:
+        messages.append(("no_columns" if df is not None else "empty_data", {}))
+        st.session_state["validation_details_data"] = counts_details
+        return messages, counts
+    if df.empty:
         messages.append(("empty_data", {}))
+        st.session_state["validation_details_data"] = counts_details
         return messages, counts
 
-    counts["missing_values"] = int(df.isna().sum().sum())
-    counts["numeric_columns"] = sum(
-        1 for index in range(df.shape[1])
-        if numeric_series(df.iloc[:, index]).notna().any()
-    )
+    header_info = header_info or {}
+    generated = list(header_info.get("generated", []))
+    generated += [
+        str(c) for c in df.columns
+        if (c is None or not str(c).strip() or str(c).strip().lower().startswith("unnamed:"))
+        and str(c) not in generated
+    ]
+    if generated:
+        messages.append(("generated_headers", {"count": len(generated), "items": ", ".join(generated)}))
+    duplicates = list(header_info.get("duplicates", []))
+    duplicates += [str(c) for c in pd.Index(df.columns)[pd.Index(df.columns).duplicated()] if str(c) not in duplicates]
+    if duplicates:
+        messages.append(("duplicate_headers_detail", {"items": ", ".join(duplicates)}))
 
-    if len(df.columns) == 0:
-        messages.append(("no_columns", {}))
-    if any(
-        column is None
-        or not str(column).strip()
-        or str(column).strip().lower().startswith("unnamed:")
-        for column in df.columns
-    ):
-        messages.append(("missing_headers", {}))
-    if pd.Index(df.columns).duplicated().any():
-        messages.append(("duplicate_headers", {}))
-
-    empty_rows = int(df.isna().all(axis=1).sum())
-    empty_columns = int(df.isna().all(axis=0).sum())
+    missing = missing_mask(df)
+    counts["missing_values"] = int(missing.values.sum())
+    empty_rows = int(missing.all(axis=1).sum())
+    empty_columns = int(missing.all(axis=0).sum())
     if empty_rows:
         messages.append(("empty_rows", {"count": empty_rows}))
     if empty_columns:
         messages.append(("empty_columns", {"count": empty_columns}))
     if counts["missing_values"]:
-        messages.append(("missing_values", {"count": counts["missing_values"]}))
+        messages.append(("missing_values_detail", {"count": counts["missing_values"]}))
+
+    non_empty = df.loc[~missing.all(axis=1)]
+    try:
+        duplicate_rows = int(non_empty.astype(str).duplicated(keep="first").sum())
+    except Exception:
+        duplicate_rows = 0
+    counts["duplicate_rows"] = duplicate_rows
+    if duplicate_rows:
+        messages.append(("duplicate_rows", {"count": duplicate_rows}))
+
+    counts["numeric_columns"] = sum(
+        1 for index in range(df.shape[1]) if is_mostly_numeric(df.iloc[:, index])
+    )
 
     detected = detect_financial_columns(df)
-    invalid_count = 0
-    for index in set(detected.values()):
+    invalid_count = ambiguous_count = 0
+    for index in sorted(set(detected.values())):
         source = df.iloc[:, index]
-        parsed = numeric_series(source)
-        invalid_count += int((source.notna() & parsed.isna()).sum())
+        status = numeric_status(source)
+        if not status.isin(["ok", "ambiguous"]).any():
+            # A text column whose header looks financial (e.g. "Clients" with names).
+            if (status == "invalid").any():
+                messages.append(("text_financial_column", {"column": str(df.columns[index])}))
+            continue
+        bad = source[status == "invalid"]
+        invalid_count += len(bad)
+        ambiguous_count += int((status == "ambiguous").sum())
+        if len(bad):
+            details["invalid"].append({
+                "column": str(df.columns[index]),
+                "count": len(bad),
+                "examples": ", ".join(map(str, bad.astype(str).unique()[:5])),
+            })
+    counts["invalid_numeric"] = invalid_count
+    counts["ambiguous_numbers"] = ambiguous_count
     if invalid_count:
-        messages.append(("invalid_numeric", {"count": invalid_count}))
+        messages.append(("invalid_numeric_detail", {"count": invalid_count}))
+    if ambiguous_count:
+        messages.append(("ambiguous_numbers", {"count": ambiguous_count}))
 
+    st.session_state["validation_details_data"] = counts_details
     return messages, counts
 
 
@@ -1135,6 +1350,74 @@ def render_home() -> None:
     st.info(t("home_import_hint"))
 
 
+XLSX_MAGIC = b"PK\x03\x04"
+XLS_MAGIC = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
+
+
+def _excel_engine(filename: str, file_bytes: bytes) -> str:
+    """Choose the reading engine from the file content, falling back on the extension."""
+    if file_bytes.startswith(XLS_MAGIC):
+        return "xlrd"
+    if file_bytes.startswith(XLSX_MAGIC):
+        return "openpyxl"
+    return "xlrd" if Path(filename).suffix.lower() == ".xls" else "openpyxl"
+
+
+def _header_label(value: Any) -> str:
+    if is_missing_value(value):
+        return ""
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    if isinstance(value, (pd.Timestamp,)) or hasattr(value, "strftime"):
+        try:
+            return value.strftime("%Y-%m-%d")
+        except Exception:
+            pass
+    return str(value).replace("\u00a0", " ").strip()
+
+
+def read_worksheet(file_bytes: bytes, sheet: str, engine: str) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Read one worksheet, keeping every row/column and building safe, unique headers."""
+    raw = pd.read_excel(io.BytesIO(file_bytes), sheet_name=sheet, engine=engine, header=None)
+    info: dict[str, Any] = {"generated": [], "duplicates": []}
+    if raw.empty:
+        return pd.DataFrame(), info
+
+    # Blank lines above the header row are layout, not data.
+    filled = ~missing_mask(raw).all(axis=1)
+    if not filled.any():
+        return pd.DataFrame(), info
+    header_pos = int(np.argmax(filled.to_numpy()))
+    header_row = raw.iloc[header_pos].tolist()
+    body = raw.iloc[header_pos + 1:].reset_index(drop=True)
+
+    names: list[str] = []
+    seen: dict[str, int] = {}
+    for position, value in enumerate(header_row, start=1):
+        label = _header_label(value)
+        if not label:
+            label = f"Column {position}"
+            info["generated"].append(label)
+        key = label.lower()
+        if key in seen:
+            seen[key] += 1
+            if label not in info["duplicates"]:
+                info["duplicates"].append(label)
+            label = f"{label} ({seen[key]})"
+        else:
+            seen[key] = 1
+        names.append(label)
+    body.columns = names
+    body = body.infer_objects()
+    return body, info
+
+
+def _reset_loaded_state() -> None:
+    for key in ("data", "analysis_results", "diagnostic_results", "header_info",
+                "loaded_filename", "loaded_sheet", "validation_details_data"):
+        st.session_state[key] = None
+
+
 def render_import_page() -> None:
     st.title(t("import_title"))
     st.write(t("import_intro"))
@@ -1148,16 +1431,15 @@ def render_import_page() -> None:
 
     if uploaded is not None:
         raw_bytes = uploaded.getvalue()
-        signature = (uploaded.name, len(raw_bytes))
+        signature = (uploaded.name, len(raw_bytes), hashlib.md5(raw_bytes).hexdigest())
         if signature != st.session_state.file_signature:
             st.session_state.uploaded_file = raw_bytes
             st.session_state.uploaded_filename = uploaded.name
             st.session_state.file_signature = signature
             st.session_state.sheet_names = []
             st.session_state.selected_sheet = None
-            st.session_state.data = None
-            st.session_state.analysis_results = None
-            st.session_state.diagnostic_results = None
+            st.session_state.pop("sheet_widget", None)
+            _reset_loaded_state()
 
     file_bytes = st.session_state.get("uploaded_file")
     filename = st.session_state.get("uploaded_filename")
@@ -1170,17 +1452,23 @@ def render_import_page() -> None:
             render_loaded_data()
         return
 
-    st.success(t("file_ready", filename=filename))
-
-    try:
-        extension = Path(filename).suffix.lower()
-        engine = "xlrd" if extension == ".xls" else "openpyxl"
-        workbook = pd.ExcelFile(io.BytesIO(file_bytes), engine=engine)
-        sheet_names = workbook.sheet_names
-        st.session_state.sheet_names = sheet_names
-    except Exception as exc:
-        st.error(t("import_error", error=str(exc)))
+    extension = Path(filename).suffix.lower()
+    if extension not in {".xlsx", ".xls"}:
+        st.error(t("unsupported_format", ext=extension or "?"))
         return
+
+    engine = _excel_engine(filename, file_bytes)
+    try:
+        workbook = pd.ExcelFile(io.BytesIO(file_bytes), engine=engine)
+        sheet_names = list(workbook.sheet_names)
+    except ImportError:
+        st.error(t("missing_engine", ext=extension, engine=engine))
+        return
+    except Exception:
+        st.error(t("unreadable_file"))
+        return
+    st.session_state.sheet_names = sheet_names
+    st.success(t("file_ready", filename=filename))
 
     if not sheet_names:
         st.warning(t("no_sheets"))
@@ -1201,31 +1489,41 @@ def render_import_page() -> None:
     )
     st.session_state.selected_sheet = selected_sheet
 
-    st.button(
+    load_clicked = st.button(
         t("load_sheet"),
         type="primary",
         key="load_sheet_button",
     )
 
-    # The button's state is read after the widget declaration on each rerun.
-    if st.session_state.get("load_sheet_button"):
+    if load_clicked:
+        if selected_sheet not in sheet_names:
+            st.error(t("sheet_missing", sheet=selected_sheet))
+            return
         try:
-            df = pd.read_excel(
-                io.BytesIO(file_bytes),
-                sheet_name=selected_sheet,
-                engine=engine,
-            )
-            st.session_state.data = df
-            st.session_state.analysis_results = None
-            st.session_state.diagnostic_results = None
-            st.session_state.loaded_filename = filename
-            st.session_state.loaded_sheet = selected_sheet
-            st.success(t("sheet_loaded"))
+            df, header_info = read_worksheet(file_bytes, selected_sheet, engine)
+        except ValueError:
+            st.error(t("sheet_missing", sheet=selected_sheet))
+            return
         except Exception as exc:
             st.error(t("import_error", error=str(exc)))
             return
+        _reset_loaded_state()
+        st.session_state.data = df
+        st.session_state.header_info = header_info
+        st.session_state.loaded_filename = filename
+        st.session_state.loaded_sheet = selected_sheet
+        if df.empty:
+            st.warning(t("empty_data"))
+        else:
+            st.success(t("sheet_loaded"))
 
     if get_financial_frame() is not None:
+        loaded_sheet = st.session_state.get("loaded_sheet")
+        if loaded_sheet is not None and (
+            loaded_sheet != selected_sheet
+            or st.session_state.get("loaded_filename") != filename
+        ):
+            st.info(t("sheet_not_loaded"))
         st.write("")
         st.subheader(t("current_data"))
         st.caption(t("change_sheet_note"))
@@ -1241,31 +1539,60 @@ def render_import_page() -> None:
         st.info(t("load_first"))
 
 
+WARNING_MESSAGES = {
+    "empty_data", "no_columns", "duplicate_headers_detail", "invalid_numeric_detail",
+    "duplicate_rows", "generated_headers", "ambiguous_numbers",
+}
+
+
 def render_loaded_data() -> None:
     df = get_financial_frame()
     if df is None:
         return
 
-    messages, counts = validate_data(df)
-    numeric_count = counts["numeric_columns"]
+    if st.session_state.get("loaded_filename") and st.session_state.get("loaded_sheet") is not None:
+        st.caption(t(
+            "loaded_from",
+            filename=st.session_state.loaded_filename,
+            sheet=st.session_state.loaded_sheet,
+        ))
+
+    messages, counts = validate_data(df, st.session_state.get("header_info"))
 
     cols = st.columns(3)
     cols[0].metric(t("rows"), counts["rows"])
     cols[1].metric(t("columns"), counts["columns"])
-    cols[2].metric(t("numeric_columns"), numeric_count)
+    cols[2].metric(t("numeric_columns"), counts["numeric_columns"])
 
     st.subheader(t("preview"))
-    st.dataframe(df.head(100), use_container_width=True, hide_index=True)
+    if df.empty:
+        st.info(t("empty_data"))
+    else:
+        st.dataframe(df.head(100), use_container_width=True, hide_index=True)
 
     st.subheader(t("validation"))
     if not messages:
         st.success(t("validation_ok"))
     else:
         for key, params in messages:
-            if key in {"empty_data", "missing_headers", "duplicate_headers", "invalid_numeric"}:
+            if key in WARNING_MESSAGES:
                 st.warning(t(key, **params))
             else:
                 st.info(t(key, **params))
+
+    details = st.session_state.get("validation_details_data") or {}
+    invalid = details.get("invalid") or []
+    if invalid:
+        with st.expander(t("validation_details")):
+            st.markdown(f"**{t('invalid_examples')}**")
+            st.dataframe(
+                pd.DataFrame([
+                    {t("column"): item["column"], t("count"): item["count"], t("examples"): item["examples"]}
+                    for item in invalid
+                ]),
+                use_container_width=True,
+                hide_index=True,
+            )
 
 
 def render_dashboard() -> None:
@@ -1296,71 +1623,134 @@ def render_dashboard() -> None:
                 metric_card(label_key, metric_key, metrics)
 
     st.write("")
+    render_trend_chart(df)
+    render_missing_chart(df)
+
+
+PERIOD_NAMES = {
+    "date", "year", "years", "period", "periode", "annee", "exercice", "exercise",
+    "fiscal year", "month", "mois", "quarter", "trimestre", "semestre", "fy",
+    "السنة", "الفترة", "التاريخ", "الشهر",
+}
+
+
+def find_period_column(df: pd.DataFrame) -> int | None:
+    """Locate a date / year / period column usable as a chart axis."""
+    for index, column in enumerate(df.columns):
+        name = normalize_text(column)
+        if name in PERIOD_NAMES or any(name.startswith(p + " ") for p in PERIOD_NAMES):
+            return index
+    for index in range(df.shape[1]):
+        if pd.api.types.is_datetime64_any_dtype(df.iloc[:, index]):
+            return index
+    for index in range(df.shape[1]):
+        values = pd.to_numeric(df.iloc[:, index], errors="coerce").dropna()
+        if len(values) >= 2 and len(values) == df.iloc[:, index].notna().sum() and (
+            values.between(1900, 2100).all() and (values % 1 == 0).all() and values.is_unique
+        ):
+            return index
+    return None
+
+
+def _period_labels(series: pd.Series) -> pd.Series:
+    def label(value: Any) -> str:
+        if is_missing_value(value):
+            return ""
+        if isinstance(value, float) and value.is_integer():
+            return str(int(value))
+        if hasattr(value, "strftime"):
+            try:
+                return value.strftime("%Y-%m-%d")
+            except Exception:
+                return str(value)
+        return str(value)
+    return series.map(label)
+
+
+def render_trend_chart(df: pd.DataFrame) -> None:
     detected = detect_financial_columns(df)
-    revenue_series = _column_values(df, detected, "revenue")
-    net_income_series = _column_values(df, detected, "net_income")
-    if (revenue_series is not None and revenue_series.notna().any()) or (
-        net_income_series is not None and net_income_series.notna().any()
-    ):
-        chart_data = pd.DataFrame(index=range(len(df)))
-        if revenue_series is not None:
-            chart_data[t("revenue")] = revenue_series.reset_index(drop=True)
-        if net_income_series is not None:
-            chart_data[t("net_income")] = net_income_series.reset_index(drop=True)
+    series = {
+        "revenue": _column_values(df, detected, "revenue"),
+        "net_income": _column_values(df, detected, "net_income"),
+    }
+    missing = [t(key).lower() for key, values in series.items() if values is None]
+    available = {
+        key: values for key, values in series.items()
+        if values is not None and values.notna().any()
+    }
 
-        date_index = None
-        for index, column in enumerate(df.columns):
-            normalized = normalize_text(column)
-            if normalized in {"date", "year", "period", "annee", "année", "période"}:
-                date_index = index
-                break
-        if date_index is not None:
-            chart_data.insert(
-                0,
-                t("row_number"),
-                df.iloc[:, date_index].astype(str).reset_index(drop=True),
-            )
-            x_axis = t("row_number")
+    with st.container(border=True):
+        st.subheader(t("revenue_trend"))
+        if len(missing) == 2:
+            st.info(t("chart_missing_columns", items=" / ".join(missing)))
+            return
+        if not available:
+            st.info(t("chart_no_values"))
+            return
+        if missing:
+            st.caption(t("chart_partial", items=" / ".join(missing)))
+
+        period_index = find_period_column(df)
+        if period_index is not None:
+            x_values = _period_labels(df.iloc[:, period_index]).reset_index(drop=True)
+            x_title = str(df.columns[period_index])
         else:
-            chart_data.insert(0, t("row_number"), range(1, len(df) + 1))
-            x_axis = t("row_number")
+            x_values = pd.Series(range(1, len(df) + 1))
+            x_title = t("row_number")
 
-        with st.container(border=True):
-            st.subheader(t("revenue_trend"))
-            fig = px.line(chart_data, x=x_axis, y=list(chart_data.columns[1:]), markers=True)
-            fig.update_layout(
-                template="plotly_white",
-                margin=dict(l=15, r=15, t=15, b=15),
-                legend_title_text="",
-                xaxis_title="",
-                yaxis_title="",
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        # Revenue and net income share the same monetary unit, so one axis is appropriate.
+        frame = pd.DataFrame({"_x": x_values})
+        for key, values in available.items():
+            frame[t(key)] = values.reset_index(drop=True)
+        value_columns = [t(key) for key in available]
+        frame = frame.dropna(subset=value_columns, how="all")
+        if frame.empty:
+            st.info(t("chart_no_values"))
+            return
 
-    missing = df.isna().sum()
-    missing = missing[missing > 0].sort_values(ascending=False)
+        long_frame = frame.melt(id_vars="_x", value_vars=value_columns, var_name="series", value_name="value")
+        fig = px.line(long_frame, x="_x", y="value", color="series", markers=True)
+        fig.update_traces(connectgaps=False)
+        fig.update_layout(
+            template="plotly_white",
+            margin=dict(l=15, r=15, t=15, b=15),
+            legend_title_text="",
+            xaxis_title=x_title,
+            yaxis_title=t("amount"),
+        )
+        if period_index is not None:
+            fig.update_xaxes(type="category")
+        st.plotly_chart(fig, use_container_width=True)
+
+
+def render_missing_chart(df: pd.DataFrame) -> None:
     with st.container(border=True):
         st.subheader(t("data_quality"))
+        if df.empty or len(df.columns) == 0:
+            st.info(t("empty_data"))
+            return
+        missing = missing_mask(df).sum()
+        missing = missing[missing > 0].sort_values(ascending=False)
         if missing.empty:
             st.success(t("validation_ok"))
-        else:
-            missing_frame = pd.DataFrame({
-                t("column"): missing.index.astype(str),
-                t("missing"): missing.values,
-            })
-            fig = px.bar(
-                missing_frame,
-                x=t("column"),
-                y=t("missing"),
-                color_discrete_sequence=["#4183C4"],
-            )
-            fig.update_layout(
-                template="plotly_white",
-                margin=dict(l=15, r=15, t=15, b=15),
-                xaxis_title="",
-                yaxis_title="",
-            )
-            st.plotly_chart(fig, use_container_width=True)
+            return
+        missing_frame = pd.DataFrame({
+            t("column"): missing.index.astype(str),
+            t("missing"): missing.values.astype(int),
+        })
+        fig = px.bar(
+            missing_frame,
+            x=t("column"),
+            y=t("missing"),
+            color_discrete_sequence=["#4183C4"],
+        )
+        fig.update_layout(
+            template="plotly_white",
+            margin=dict(l=15, r=15, t=15, b=15),
+            xaxis_title="",
+            yaxis_title="",
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 
 ANALYSIS_GROUPS = {
