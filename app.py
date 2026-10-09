@@ -1493,43 +1493,7 @@ def build_diagnostic(df: pd.DataFrame, metrics: dict[str, Any]) -> dict[str, lis
 
 def render_simulation() -> None:
     st.title("Simulation financière")
-    st.write("Modifiez les hypothèses pour mesurer leur impact sur les principaux indicateurs.")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        ca = st.number_input("Chiffre d'affaires", min_value=0.0, value=1000000.0, step=10000.0)
-        resultat_net = st.number_input("Résultat net", value=100000.0, step=5000.0)
-        capitaux_propres = st.number_input("Capitaux propres", min_value=0.0, value=500000.0, step=10000.0)
-
-    with col2:
-        total_actif = st.number_input("Total actif", min_value=0.0, value=1000000.0, step=10000.0)
-        dette = st.number_input("Dettes financières", min_value=0.0, value=200000.0, step=10000.0)
-        creances = st.number_input("Créances clients", min_value=0.0, value=150000.0, step=5000.0)
-
-    stock = st.number_input("Stock", min_value=0.0, value=100000.0, step=5000.0)
-
-    if ca > 0 and total_actif > 0 and capitaux_propres > 0:
-        marge = (resultat_net / ca) * 100
-        roa_sim = (resultat_net / total_actif) * 100
-        roe_sim = (resultat_net / capitaux_propres) * 100
-        endettement = (dette / capitaux_propres) * 100
-        dso_sim = (creances / ca) * 365
-
-        st.subheader("Résultats simulés")
-
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Marge nette", f"{marge:.2f} %")
-        c2.metric("ROA", f"{roa_sim:.2f} %")
-        c3.metric("ROE", f"{roe_sim:.2f} %")
-
-        c4, c5 = st.columns(2)
-        c4.metric("Endettement", f"{endettement:.2f} %")
-        c5.metric("Délai clients", f"{dso_sim:.1f} jours")
-
-        st.info(f"Stock simulé : {stock:,.0f}")
-    else:
-        st.warning("Vérifiez les valeurs saisies.")
+    st.info("Module de simulation financière en préparation.")
 def render_diagnostic() -> None:
     st.title(t("diagnostic_title"))
     st.write(t("diagnostic_intro"))
@@ -1712,7 +1676,6 @@ def main() -> None:
     page = st.session_state.get("page", "home")
     renderers = {
         "home": render_home,
-        "simulation": render_simulation,
         "dashboard": render_dashboard,
         "analysis": render_analysis,
         "diagnostic": render_diagnostic,
@@ -1724,3 +1687,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    
